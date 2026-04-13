@@ -209,3 +209,7 @@ __marimo__/
 
 .claude
 CLAUDE.md
+
+# Lab2 generated files
+lab2/datasets/
+lab2/model.pkl
