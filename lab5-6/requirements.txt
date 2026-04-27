@@ -1,0 +1,26 @@
+# Установка: py -3.12 -m pip install -r requirements.txt
+
+# --- Jupyter ---
+notebook
+ipykernel
+
+# --- Общее ---
+numpy
+pandas
+matplotlib
+
+# --- Лаба 5: способы вызова C из Python ---
+cffi
+cython
+setuptools
+
+# --- Лаба 6: ML pipeline ---
+scikit-learn
+
+# --- Системные зависимости (через pip не ставятся) ---
+# GCC для сборки stats.dll:
+#   winget install MSYS2.MSYS2
+#   или: scoop install gcc
+#
+# .NET 8 SDK для C# клиента:
+#   winget install Microsoft.DotNet.SDK.8

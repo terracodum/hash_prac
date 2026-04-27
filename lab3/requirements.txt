@@ -1,0 +1,8 @@
+# Установка: py -3.12 -m pip install -r requirements.txt
+
+numpy
+pandas
+scikit-learn
+joblib
+pygad
+pyswarms
