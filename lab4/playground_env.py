@@ -1,5 +1,5 @@
 import numpy as np
-from env import TankEnv, Goal, Tank, ROWS, COLS
+from env import TankEnv, Goal, Tank, ROWS, COLS, DEFAULT_MAP
 
 
 class TankEnvEx(TankEnv):
@@ -23,11 +23,12 @@ class TankEnvEx(TankEnv):
         self.goal_move_every = goal_move_every
         self.goal_flees      = goal_flees
         self._rng            = np.random.default_rng(seed)
-        # free_cells заполним после того как grid известен
+        # вычисляем free_cells ДО super().__init__, т.к. он вызывает reset()
+        _grid = grid if grid is not None else DEFAULT_MAP.copy()
+        self._free_cells = [(r, c) for r in range(ROWS) for c in range(COLS)
+                            if _grid[r][c] == 0]
         super().__init__(grid=grid, tank_start=tank_start, goal_pos=goal_pos,
                          max_steps=max_steps, rewards=rewards)
-        self._free_cells = [(r, c) for r in range(ROWS) for c in range(COLS)
-                            if self.grid[r][c] == 0]
 
     # ------------------------------------------------------------------
     def _random_free(self, exclude=()):
@@ -66,7 +67,7 @@ class TankEnvEx(TankEnv):
         return self._observe(), reward, done
 
     def _flee_goal(self):
-        """Цель уходит в соседнюю клетку максимально далёкую от танка."""
+        """Цель убегает от танка: жадно по расстоянию, иногда случайно чтобы не зацикливаться."""
         tr, tc = self.tank.row, self.tank.col
         gr, gc = self.goal.row, self.goal.col
         candidates = []
@@ -74,7 +75,12 @@ class TankEnvEx(TankEnv):
             nr, nc = gr + dr, gc + dc
             if self._is_free(nr, nc):
                 candidates.append((abs(nr - tr) + abs(nc - tc), nr, nc))
-        if candidates:
+        if not candidates:
+            return
+        # 20% — случайный ход чтобы не застрять в петле, 80% — максимальное расстояние
+        if self._rng.random() < 0.2:
+            _, nr, nc = candidates[self._rng.integers(len(candidates))]
+        else:
             _, nr, nc = max(candidates)
-            self.goal = Goal(nr, nc)
-            self._prev_dist = self._dist()
+        self.goal = Goal(nr, nc)
+        self._prev_dist = self._dist()
