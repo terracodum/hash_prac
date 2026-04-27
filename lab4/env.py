@@ -1,10 +1,10 @@
 import os
 import numpy as np
+import pygame
 
 os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 
-import pygame
 pygame.init()
 
 # ---------------------------------------------------------------------------
@@ -28,12 +28,12 @@ C_ARROW = (255, 255, 255)
 # ---------------------------------------------------------------------------
 DEFAULT_MAP = np.array([
     [1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,0,0,1,0,0,1],
-    [1,0,1,0,0,0,1,0,0,1],
+    [1,0,0,0,0,1,0,0,0,1],
+    [1,0,1,1,0,0,0,0,0,1],
+    [1,1,1,0,0,0,1,0,0,1],
+    [1,0,0,0,1,0,0,0,1,1],
     [1,0,0,0,1,0,0,0,0,1],
-    [1,0,0,0,1,0,0,0,0,1],
-    [1,0,0,1,1,0,0,1,0,1],
+    [1,1,0,1,1,0,0,1,0,1],
     [1,0,0,0,0,0,0,1,0,1],
     [1,0,0,0,0,0,0,0,0,1],
     [1,1,1,1,1,1,1,1,1,1],
@@ -82,11 +82,21 @@ class TankEnv:
 
     ACTIONS = {0: 'вперёд', 1: 'назад', 2: 'влево', 3: 'вправо'}
 
-    def __init__(self, grid=None, tank_start=(1, 1), goal_pos=(8, 8), max_steps=200):
+    DEFAULT_REWARDS = {
+        'step':    -1,
+        'wall':   -10,
+        'closer': +10,
+        'farther': -5,
+        'goal':  +100,
+    }
+
+    def __init__(self, grid=None, tank_start=(1, 1), goal_pos=(8, 8),
+                 max_steps=200, rewards=None):
         self.grid       = grid if grid is not None else DEFAULT_MAP.copy()
         self.tank_start = tank_start
         self.goal_pos   = goal_pos
         self.max_steps  = max_steps
+        self.rewards    = {**self.DEFAULT_REWARDS, **(rewards or {})}
         self.surface    = pygame.Surface((WIDTH, HEIGHT))
         self.reset()
 
@@ -101,7 +111,7 @@ class TankEnv:
     # ------------------------------------------------------------------
     def step(self, action):
         self.steps += 1
-        reward = -1
+        reward = self.rewards['step']
         done   = False
 
         if action == 2:
@@ -115,20 +125,20 @@ class TankEnv:
             nr = self.tank.row + dr
             nc = self.tank.col + dc
             if self.grid[nr][nc] == 1:
-                reward -= 10
+                reward += self.rewards['wall']
             else:
                 self.tank.row = nr
                 self.tank.col = nc
 
         dist = self._dist()
         if dist < self._prev_dist:
-            reward += 10
+            reward += self.rewards['closer']
         elif dist > self._prev_dist:
-            reward -= 5
+            reward += self.rewards['farther']
         self._prev_dist = dist
 
         if self.tank.row == self.goal.row and self.tank.col == self.goal.col:
-            reward += 100
+            reward += self.rewards['goal']
             done = True
 
         if self.steps >= self.max_steps:
@@ -142,6 +152,9 @@ class TankEnv:
 
     def _dist(self):
         return abs(self.tank.row - self.goal.row) + abs(self.tank.col - self.goal.col)
+
+    def _is_free(self, r, c):
+        return 0 <= r < ROWS and 0 <= c < COLS and self.grid[r][c] == 0
 
     def _observe(self):
         return (self.tank.row, self.tank.col, self.tank.angle // 90,
