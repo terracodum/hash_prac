@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "AtnMOuhkPA4=",
+  "success": true,
+  "projectFilePath": "/Users/feedachyou/Code/hash_prac/lab6/csharp_client/PythonClient.csproj",
+  "expectedPackageFiles": [
+    "/Users/feedachyou/.nuget/packages/microsoft.netcore.app.ref/8.0.25/microsoft.netcore.app.ref.8.0.25.nupkg.sha512",
+    "/Users/feedachyou/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.25/microsoft.aspnetcore.app.ref.8.0.25.nupkg.sha512",
+    "/Users/feedachyou/.nuget/packages/microsoft.netcore.app.host.osx-arm64/8.0.25/microsoft.netcore.app.host.osx-arm64.8.0.25.nupkg.sha512"
+  ],
+  "logs": []
+}
