@@ -1,14 +1,13 @@
 """
-Python pipeline: принимает JSON с признаками, возвращает предсказание в JSON.
+Python pipeline: принимает признаки, возвращает предсказание в JSON.
 
-Входные данные (sys.argv[1]) — JSON строка вида:
-  {"features": [5.1, 3.5, 1.4, 0.2]}
+Три режима ввода:
+  1. JSON-строка:  predict.py '{"features": [5.1, 3.5, 1.4, 0.2]}'
+  2. Файл:         predict.py --file input.json
+  3. Числа argv:   predict.py 5.1 3.5 1.4 0.2
 
-Выход (stdout) — JSON вида:
+Выход (stdout):
   {"prediction": 0, "class": "setosa", "probabilities": {"setosa": 1.0, ...}}
-
-Запуск вручную:
-  py -3.12 predict.py "{\"features\": [5.1, 3.5, 1.4, 0.2]}"
 """
 import sys
 import json
@@ -22,31 +21,34 @@ def load_model():
     if not model_path.exists():
         raise FileNotFoundError(
             f"Модель не найдена: {model_path}\n"
-            "Запусти сначала: py -3.12 train_model.py"
+            "Запусти сначала: train_model.py"
         )
     with open(model_path, "rb") as f:
         return pickle.load(f)
 
 
+def parse_args(argv: list) -> list:
+    if not argv:
+        raise ValueError("Нет входных данных")
+
+    if argv[0] == "--file":
+        if len(argv) < 2:
+            raise ValueError("--file требует путь к файлу")
+        text = pathlib.Path(argv[1]).read_text(encoding="utf-8")
+        return json.loads(text)["features"]
+
+    if argv[0].startswith("{"):
+        return json.loads(argv[0])["features"]
+
+    return [float(v) for v in argv]
+
+
 def main():
-    if len(sys.argv) < 2:
-        print(json.dumps({"error": "Нет входных данных. Передай JSON как argv[1]"}))
-        sys.exit(1)
-
     try:
-        data = json.loads(sys.argv[1])
-    except json.JSONDecodeError as e:
-        print(json.dumps({"error": f"Неверный JSON: {e}"}))
-        sys.exit(1)
-
-    if "features" not in data:
-        print(json.dumps({"error": "Ключ 'features' отсутствует"}))
-        sys.exit(1)
-
-    try:
-        features = np.array(data["features"], dtype=np.float64).reshape(1, -1)
-    except (ValueError, TypeError) as e:
-        print(json.dumps({"error": f"Неверные признаки: {e}"}))
+        raw = parse_args(sys.argv[1:])
+        features = np.array(raw, dtype=np.float64).reshape(1, -1)
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
         sys.exit(1)
 
     if features.shape[1] != 4:
