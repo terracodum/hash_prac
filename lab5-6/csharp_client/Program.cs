@@ -57,8 +57,8 @@ class Program
 
         var psi = new ProcessStartInfo
         {
-            FileName               = "py",
-            Arguments              = $"-3.12 \"{scriptPath}\" \"{jsonPayload.Replace("\"", "\\\"")}\"",
+            FileName               = "python3",
+            Arguments              = $"\"{scriptPath}\" \"{jsonPayload.Replace("\"", "\\\"")}\"",
             RedirectStandardOutput = true,
             RedirectStandardError  = true,
             UseShellExecute        = false,
